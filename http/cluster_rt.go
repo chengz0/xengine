@@ -6,7 +6,7 @@ import (
 )
 
 func ClusterRouter() {
-	martini_m.Group("/hosts", func(router martini.Router) {
+	martini_m.Group("/host", func(router martini.Router) {
 		router.Post("/add", controllers.AddHost)
 		router.Delete("/del", controllers.DelHost)
 	})

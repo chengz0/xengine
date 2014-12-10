@@ -26,5 +26,11 @@ func StartMartini() {
 	// cluster manager
 	ClusterRouter()
 
+	// image manager
+	ImageRouter()
+
+	// container manager
+	ContainerRouter()
+
 	http.ListenAndServe(":3000", martini_m)
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/chengz0/xengine/controllers"
+	"github.com/chengz0/xengine/global"
 	"github.com/chengz0/xengine/http"
 	"github.com/deepglint/glog"
 	"gopkg.in/mgo.v2"
@@ -41,7 +42,8 @@ func main() {
 	if err != nil {
 		glog.Fatalf("Error auth db: %s", err.Error())
 	}
-	controllers.HostsCollection = db.C(config.Collection)
+
+	go global.InitGlobal(db, config.Collection)
 
 	controllers.IPregex = regexp.MustCompile("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$")
 

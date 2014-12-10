@@ -13,7 +13,7 @@ type HostModel struct {
 	SensorId string
 	HostType string
 	ParentId string
-	Status   bool
+	// Status   bool
 }
 
 /*
@@ -64,8 +64,8 @@ func HostsByConditions(db *mgo.Collection, conditions map[string]interface{}) ([
 			selector = append(selector, bson.M{"hosttype": value.(string)})
 		case "parentid":
 			selector = append(selector, bson.M{"parentid": value.(string)})
-		case "status":
-			selector = append(selector, bson.M{"status": value.(bool)})
+		// case "status":
+		// 	selector = append(selector, bson.M{"status": value.(bool)})
 		default:
 			continue
 		}
@@ -101,7 +101,7 @@ func (this *HostModel) Save(db *mgo.Collection) error {
 
 func (this *HostModel) Update(db *mgo.Collection) error {
 	selector := bson.M{"_id": this.Id}
-	update := bson.M{"$set": bson.M{"HostIp": this.HostIp, "SensorId": this.SensorId, "HostType": this.HostType, "ParentId": this.ParentId, "Status": this.Status}}
+	update := bson.M{"$set": bson.M{"HostIp": this.HostIp, "SensorId": this.SensorId, "HostType": this.HostType, "ParentId": this.ParentId}}
 	err := db.Update(selector, update)
 	if err != nil {
 		glog.Errorf("Error updating host: %s", err.Error())
