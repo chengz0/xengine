@@ -6,9 +6,17 @@ import (
 	"github.com/deepglint/go-dockerclient"
 	"gopkg.in/mgo.v2"
 	"strings"
+	"sync"
+	"time"
 )
 
 var (
+	// global timeout
+	Timeout = time.After(2 * time.Second)
+
+	// hosts in cluster
+	ClusterHosts []models.HostModel
+
 	// cluster_db
 	HostsCollection *mgo.Collection
 
@@ -19,7 +27,9 @@ var (
 	HostsInfo map[string]*models.HostInfoBinding
 
 	// containerId_status
-	ContainerStatus map[string]models.ContainerStatusBinding
+	ContainerStatus map[string]*models.ContainerStatusBinding
+
+	ClusterGroup sync.WaitGroup
 )
 
 func InitGlobal(db *mgo.Database, collection string) {
@@ -27,31 +37,34 @@ func InitGlobal(db *mgo.Database, collection string) {
 	// db collection
 	HostsCollection = db.C(collection)
 
-	// new client
-	hosts, err := models.Hosts(HostsCollection)
-	if err != nil {
-		glog.Fatalf("Error getting hosts: %s", err)
-	}
+	// init hosts
+	ClusterHosts, _ = models.Hosts(HostsCollection)
+	// glog.Infoln(ClusterHosts)
 
 	// init host_containers
 	HostsInfo = make(map[string]*models.HostInfoBinding)
 
 	// init container_status
-	ContainerStatus = make(map[string]models.ContainerStatusBinding)
+	ContainerStatus = make(map[string]*models.ContainerStatusBinding)
 
-	for _, host := range hosts {
+	ClusterGroup.Add(len(ClusterHosts))
+	for _, host := range ClusterHosts {
 		go InitClient(host.HostIp)
 	}
+	ClusterGroup.Wait()
+	glog.Infoln("Done with client.")
 }
 
 func InitClient(hostip string) {
 	glog.Infof("Parsing new host: %s", hostip)
+	defer ClusterGroup.Done()
+
 	// new client
 	hostinfo := new(models.HostInfoBinding)
 	// hostinfo status
 	hostinfo.Status = true
 
-	// init host_client
+	// init host_client for hostinfo
 	client, err := docker.NewClient("http://" + hostip + ":4243")
 	if err != nil {
 		glog.Errorf("Error on host: %s creating client: %s", hostip, err.Error())
@@ -61,6 +74,7 @@ func InitClient(hostip string) {
 	}
 	hostinfo.Client = client
 
+	// hostinfo containers
 	apicontainers, _ := client.ListContainers(docker.ListContainersOptions{
 		All: true,
 	})
@@ -73,17 +87,25 @@ func InitClient(hostip string) {
 		containerstatus.HostIp = hostip
 		containerstatus.ContainerName = strings.Replace(container.Name, "/", "", -1)
 		if container.State.Running {
-			containerstatus.Status = models.CONTAINER_START
+			containerstatus.Status = "start"
 		} else {
-			containerstatus.Status = models.CONTAINER_STOP
+			containerstatus.Status = "stop"
 			hostinfo.Status = false
 		}
-		ContainerStatus[container.ID] = *containerstatus
+		ContainerStatus[container.ID] = containerstatus
 
-		// hostinfo containers
 		containers = append(containers, container)
 	}
 	hostinfo.Containers = containers
 
+	// hostinfo listener
+	listener := make(chan *docker.APIEvents)
+	hostinfo.Listener = listener
+
+	// hostinfo sync
+	syncmutex := new(sync.Mutex)
+	hostinfo.SyncMutex = syncmutex
+
 	HostsInfo[hostip] = hostinfo
+	glog.Infoln(ClusterGroup)
 }

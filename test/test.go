@@ -10,7 +10,7 @@ import (
 	// "github.com/chengz0/xengine/models"
 	// "gopkg.in/mgo.v2/bson"
 
-	// "bytes"
+	"bytes"
 	// "encoding/json"
 	// "github.com/deepglint/go-dockerclient"
 )
@@ -26,8 +26,8 @@ func main() {
 
 	// host := new(models.HostModel)
 	// host.Id = bson.NewObjectId()
-	// host.HostIp = "192.168.2.112"
-	// host.SensorId = "DG.BLADE.S12"
+	// host.HostIp = "192.168.2.110"
+	// host.SensorId = "DG.BLADE.S10"
 	// host.HostType = "sensor"
 	// host.ParentId = "192.168.2.103"
 	// body, _ := json.Marshal(host)
@@ -36,6 +36,7 @@ func main() {
 	// 	fmt.Println(err)
 	// }
 
+	// // hosts
 	// req, err := http.NewRequest("GET", "http://192.168.1.117:3000/hosts", nil)
 	// if err != nil {
 	// 	fmt.Println(err)
@@ -48,7 +49,7 @@ func main() {
 	// }
 
 	// // list images
-	// req, err := http.NewRequest("GET", "http://192.168.1.117:3000/docker/images/192.168.2.106", nil)
+	// req, err := http.NewRequest("GET", "http://192.168.1.117:3000/docker/images/192.168.2.110", nil)
 	// if err != nil {
 	// 	fmt.Println(err)
 	// }
@@ -59,7 +60,7 @@ func main() {
 	// }
 
 	// // list containers
-	// req, err := http.NewRequest("GET", "http://192.168.1.117:3000/docker/containers/192.168.2.106", nil)
+	// req, err := http.NewRequest("GET", "http://192.168.1.117:3000/docker/containers/192.168.2.110", nil)
 	// if err != nil {
 	// 	fmt.Println(err)
 	// }
@@ -104,10 +105,22 @@ func main() {
 	// 	fmt.Println(err)
 	// }
 
+	// // clusterstatus
+	// req, err := http.NewRequest("GET", "http://192.168.1.117:3000/host/status/192.168.2.106", nil)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+
+	// clusterstatus
+	req, err := http.NewRequest("GET", "http://192.168.1.117:3000/cluster/status", nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	response, err := client.Do(req)
-	// buf := new(bytes.Buffer)
-	// buf.ReadFrom(response.Body)
-	// log.Println(response.Status, "======", buf.String())
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(response.Body)
+	log.Println(response.Status, "======", buf.String())
 	log.Println(response.StatusCode)
 	defer response.Body.Close()
 

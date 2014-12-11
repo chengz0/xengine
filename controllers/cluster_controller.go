@@ -6,13 +6,28 @@ import (
 	"github.com/chengz0/xengine/global"
 	"github.com/chengz0/xengine/models"
 	"github.com/deepglint/glog"
+	"github.com/go-martini/martini"
 	"net/http"
 	"regexp"
+	// "sync"
+	// "strings"
 )
 
 var (
 	IPregex *regexp.Regexp
 )
+
+type hoststatus struct {
+	ContainerId string
+	Name        string
+	Status      string
+}
+
+type clusterstatus struct {
+	HostIp   string
+	SensorId string
+	Status   bool
+}
 
 func AddHost(resp http.ResponseWriter, req *http.Request) {
 	buf := new(bytes.Buffer)
@@ -30,8 +45,14 @@ func AddHost(resp http.ResponseWriter, req *http.Request) {
 		resp.WriteHeader(500)
 		return
 	}
-	// and new hostinfo
+	// add new hostinfo
+	global.ClusterGroup.Add(1)
 	global.InitClient(host.HostIp)
+	global.ClusterGroup.Wait()
+	// add new hostmodel
+	global.ClusterHosts = append(global.ClusterHosts, *host)
+	// add new listener
+	go InitEventListener(global.HostsInfo[host.HostIp])
 
 	resp.WriteHeader(204)
 }
@@ -73,4 +94,31 @@ func DelHost(req *http.Request, resp http.ResponseWriter) {
 
 	host.Delete(global.HostsCollection)
 	resp.WriteHeader(204)
+}
+
+func GetHostStatus(params martini.Params, resp http.ResponseWriter) {
+	hostip := params["hostip"]
+	host := make([]hoststatus, 0)
+	for _, container := range global.HostsInfo[hostip].Containers {
+		hs := new(hoststatus)
+		hs.ContainerId = container.ID
+		hs.Name = global.ContainerStatus[container.ID].ContainerName
+		hs.Status = global.ContainerStatus[container.ID].Status
+		host = append(host, *hs)
+	}
+	body, _ := json.Marshal(host)
+	resp.Write(body)
+}
+
+func GetClusterStatus(resp http.ResponseWriter) {
+	cluster := make([]clusterstatus, 0)
+	for _, host := range global.ClusterHosts {
+		cs := new(clusterstatus)
+		cs.HostIp = host.HostIp
+		cs.SensorId = host.SensorId
+		cs.Status = global.HostsInfo[host.HostIp].Status
+		cluster = append(cluster, *cs)
+	}
+	body, _ := json.Marshal(cluster)
+	resp.Write(body)
 }

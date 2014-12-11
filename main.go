@@ -43,7 +43,9 @@ func main() {
 		glog.Fatalf("Error auth db: %s", err.Error())
 	}
 
-	go global.InitGlobal(db, config.Collection)
+	global.InitGlobal(db, config.Collection)
+
+	controllers.InitAllListener()
 
 	controllers.IPregex = regexp.MustCompile("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$")
 

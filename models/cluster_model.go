@@ -17,7 +17,7 @@ type HostModel struct {
 }
 
 /*
-	controller provider
+	controller provider for controller
 */
 func Hosts(db *mgo.Collection) ([]HostModel, error) {
 	var hosts []HostModel
@@ -85,7 +85,7 @@ func HostsByConditions(db *mgo.Collection, conditions map[string]interface{}) ([
 }
 
 /*
-	db opt
+	db basic CURD
 */
 func (this *HostModel) Save(db *mgo.Collection) error {
 	if this.Id == "" {

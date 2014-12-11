@@ -2,20 +2,24 @@ package models
 
 import (
 	"github.com/deepglint/go-dockerclient"
+	"sync"
 )
 
 type HostInfoBinding struct {
 	Client     *docker.Client
 	Containers []*docker.Container
+	Listener   chan *docker.APIEvents
+	SyncMutex  *sync.Mutex
 	Status     bool
 }
 
 type ContainerStatusBinding struct {
 	HostIp        string
 	ContainerName string
-	Status        int
+	Status        string
 }
 
+//
 const (
 	CONTAINER_MISS    = 0
 	CONTAINER_START   = 1
